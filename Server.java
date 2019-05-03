@@ -126,4 +126,79 @@ public class Server {
 			}
 		}
 	}
-}
+
+	protected class ChatServer {
+
+		// Attributes
+		private Vector<PrintWriter> vpw = new Vector<PrintWriter>();
+		private ServerSocket sc;
+		private final int PORT = 16789;
+
+		public ChatServer() {
+			try {
+				sc = new ServerSocket(PORT);
+
+				System.out.println("Chat Server is listening on port: " + PORT);
+
+				System.out.println("Server IP Address: " + InetAddress.getLocalHost().getHostAddress());
+
+				while (true) {
+					// Accept connection
+					Socket accept = sc.accept();
+
+					System.out.println("A client has connected!");
+
+					ChatServerThread cst = new ChatServerThread(accept);
+					cst.start();
+				}
+			} catch (Exception e) {
+
+				System.out.println("Exception error: " + e.getMessage());
+
+			}
+		}
+
+		class ChatServerThread extends Thread {
+
+		// Attributes
+		private Socket accept;
+
+		public ChatServerThread(Socket _accept) {
+			this.accept = _accept;
+		}
+
+		public void run() {
+			String msg;
+
+			try {
+				InputStream in = accept.getInputStream();
+				BufferedReader bin = new BufferedReader(new InputStreamReader(in));
+
+				OutputStream out = accept.getOutputStream();
+				PrintWritter pout = new PrintWritter(new OutputStreamWritter(out));
+
+				vpw.add(pout);
+
+				while ((msg = bin.readLine()) != null) {
+					for (PrintWritter tempvpw: vpw) {
+						tempvpw.println(msg);
+						tempvpw.flush();
+					}
+				}
+
+				if (msg == null) {
+					vpw.remove(pout);
+					bin.close();
+					pout.close();
+					accept.close();
+					System.out.println("A client has disconnected!");
+				}
+			} catch (Exception e) {
+
+				System.out.println("Exception error: " + e.getMessage());
+
+			}
+		}
+	} 
+	} // End of class ChatServer
+} 
