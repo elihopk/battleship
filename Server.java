@@ -1,12 +1,16 @@
-import java.io.*;
-import java.net.*;
-import java.util.*;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.Vector;
 
 /**
  * Runs a Battleship game between two clients.
@@ -15,29 +19,31 @@ import java.util.concurrent.locks.ReentrantLock;
  * @version 1.0
  */
 public class Server {
+	// Declare Variables
 	private ServerSocket serv;
 	private int conns;
 	private Board redBoard;
 	private Board blueBoard;
-	private int turns;
-	private ReentrantLock rwLock;
-	private ObjectOutputStream redOut;
-	private ObjectOutputStream blueOut;
-	
-	
+	/**
+	 * Start the server.
+	 * 
+	 * @param args Command-line arguments
+	 */
 	public static void main(String[] args) {
-		new Server();
+		Server serv = new Server();
+		serv.new ChatServer();
 	}
 	
+	/**
+	 * Initializes variables and starts server threads.
+	 */
 	public Server() {
 		System.out.println("Starting server...");
 		
-		turns = -1;
 		conns = 0;
 		
-		rwLock = new ReentrantLock();
-		
 		try {
+			// Allow 2 clients to connect
 			while (conns < 2) {
 				serv = new ServerSocket(28888);
 			
@@ -56,19 +62,34 @@ public class Server {
 		}
 	}
 	
+	/**
+	 * Handles each individual connection.
+	 * 
+	 * @author Eli Hopkins
+	 * @version 1.0
+	 */
 	protected class ServThread extends Thread {
+		// Declare Variables
 		private Socket conn;
 		private PlayerColor threadColor;
 		private ObjectInputStream ois;
 		private ObjectOutputStream oos;
 		private Board thisBoard;
-		private Board updatedBoard;
+		private int turns;
 		
+		/**
+		 * Initialize variables.
+		 * 
+		 * @param conn The client connection
+		 * @param threadColor The player's color
+		 */
 		public ServThread(Socket conn, PlayerColor threadColor) {
+			// Initialize variables
 			this.conn = conn;
 			this.threadColor = threadColor;
 			ois = null;
 			oos = null;
+			turns = -1;
 			try {
 				ois = new ObjectInputStream(this.conn.getInputStream());
 				oos = new ObjectOutputStream(this.conn.getOutputStream());
@@ -77,26 +98,24 @@ public class Server {
 			}
 			
 			if (threadColor.equals(PlayerColor.RED)) {
-				redOut = oos;
 			} else {
-				blueOut = oos;
 			}
 		}
 		
 		public void run() {
 			// If not writing try adding flush
+			// Tell client what player color they are
 			try {
 				oos.writeObject(threadColor);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 			
+			// Check playercolor of this thread
 			if (threadColor.equals(PlayerColor.BLUE)) {
+				// Get initial board
 				try {
 					blueBoard = (Board) ois.readObject();
-					rwLock.lock();
-					redOut.writeObject(blueBoard);
-					rwLock.unlock();
 				} catch (ClassNotFoundException | IOException e) {
 					e.printStackTrace();
 				}
@@ -104,32 +123,58 @@ public class Server {
 			} else {
 				try {
 					redBoard = (Board) ois.readObject();
-					rwLock.lock();
-					blueOut.writeObject(blueBoard);
-					rwLock.unlock();
 				} catch (ClassNotFoundException | IOException e) {
 					e.printStackTrace();
 				}
 				thisBoard = redBoard;
 			}
 			
+			// Blue player goes first
+			if (turns == -1 && threadColor.equals(PlayerColor.RED)) {
+				try {
+					wait();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+			
 			// Adjust value for number of hits to win game
-			while (thisBoard.getHits() < 17) {
-				if (thisBoard.getPlayerColor() == PlayerColor.RED && turns == -1) {
+			// This is the game loop
+			while (redBoard.getHits() < 17 && blueBoard.getHits() < 17) {
+				// Each turn send and receive a new board
+				if (thisBoard.getPlayerColor().equals(PlayerColor.RED)) {
 					try {
 						oos.writeObject(blueBoard);
-						updatedBoard = (Board) ois.readObject();
-						if (blueBoard.getHits() < updatedBoard.getHits()) {
-							
-						}
+						blueBoard = (Board) ois.readObject();
+					} catch (IOException | ClassNotFoundException e) {
+						e.printStackTrace();
+					}
+				} else {
+					try {
+						oos.writeObject(redBoard);
+						redBoard = (Board) ois.readObject();
 					} catch (IOException | ClassNotFoundException e) {
 						e.printStackTrace();
 					}
 				}
+				// Count the turn, notify the other thread, then wait for next turn
+				turns++;
+				notifyAll();
+				try {
+					wait();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
 			}
 		}
 	}
-
+	
+	/**
+	 * Handles the chat server.
+	 * 
+	 * @author Esteban Cruz
+	 * @version 1.0
+	 */
 	protected class ChatServer {
 
 		// Attributes
@@ -163,45 +208,45 @@ public class Server {
 
 		class ChatServerThread extends Thread {
 
-		// Attributes
-		private Socket accept;
+			// Attributes
+			private Socket accept;
 
-		public ChatServerThread(Socket _accept) {
-			this.accept = _accept;
-		}
-
-		public void run() {
-			String msg;
-
-			try {
-				InputStream in = accept.getInputStream();
-				BufferedReader bin = new BufferedReader(new InputStreamReader(in));
-
-				OutputStream out = accept.getOutputStream();
-				PrintWritter pout = new PrintWritter(new OutputStreamWritter(out));
-
-				vpw.add(pout);
-
-				while ((msg = bin.readLine()) != null) {
-					for (PrintWritter tempvpw: vpw) {
-						tempvpw.println(msg);
-						tempvpw.flush();
-					}
-				}
-
-				if (msg == null) {
-					vpw.remove(pout);
-					bin.close();
-					pout.close();
-					accept.close();
-					System.out.println("A client has disconnected!");
-				}
-			} catch (Exception e) {
-
-				System.out.println("Exception error: " + e.getMessage());
-
+			public ChatServerThread(Socket _accept) {
+				this.accept = _accept;
 			}
-		}
-	} 
+
+			public void run() {
+				String msg;
+
+				try {
+					InputStream in = accept.getInputStream();
+					BufferedReader bin = new BufferedReader(new InputStreamReader(in));
+
+					OutputStream out = accept.getOutputStream();
+					PrintWriter pout = new PrintWriter(new OutputStreamWriter(out));
+
+					vpw.add(pout);
+
+					while ((msg = bin.readLine()) != null) {
+						for (PrintWriter tempvpw: vpw) {
+							tempvpw.println(msg);
+							tempvpw.flush();
+						}
+					}
+
+					if (msg == null) {
+						vpw.remove(pout);
+						bin.close();
+						pout.close();
+						accept.close();
+						System.out.println("A client has disconnected!");
+					}
+				} catch (Exception e) {
+
+					System.out.println("Exception error: " + e.getMessage());
+
+				}
+			}
+		} 
 	} // End of class ChatServer
-} 
+}
