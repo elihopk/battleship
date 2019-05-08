@@ -24,6 +24,7 @@ public class Server {
 	private int conns;
 	private Board redBoard;
 	private Board blueBoard;
+	private Object lock;
 	/**
 	 * Start the server.
 	 * 
@@ -41,6 +42,7 @@ public class Server {
 		
 		redBoard = null;
 		blueBoard = null;
+		lock = new Object();
 		
 		new Thread() {
 			public void run() {
@@ -142,8 +144,8 @@ public class Server {
 			// Blue player goes first
 			if (turns == -1 && threadColor.equals(PlayerColor.RED)) {
 				try {
-					synchronized(ois) {
-						wait();
+					synchronized(lock) {
+						lock.wait();
 					}
 				} catch (InterruptedException e) {
 					e.printStackTrace();
@@ -185,8 +187,8 @@ public class Server {
 				turns++;
 				notifyAll();
 				try {
-					synchronized (ois) {
-						wait();
+					synchronized (lock) {
+						lock.wait();
 					}
 				} catch (InterruptedException e) {
 					e.printStackTrace();

@@ -14,6 +14,7 @@ import javax.swing.*;
 
 public class BattleShipGui extends JPanel
 {
+	private Object lock;
    private static BattleShipGui ob;
    private final int SIZE = 9;
    private String nick;
@@ -59,6 +60,8 @@ public class BattleShipGui extends JPanel
       gameSocket = null;
       chatPWrite = null;
       
+      lock = new Object();
+      
       try {
 		chatSocket = new Socket(IP, 16789);
 		gameSocket = new Socket(IP, 16790);
@@ -90,21 +93,40 @@ public class BattleShipGui extends JPanel
       jpChatBox = new JPanel();
       jpChatBox.setBackground(new Color(0, 0, 255));
       
-      for (char row = 'A'; row <= 'I'; row++)
-      {
-         for (int col = 1, i = 0, j = 0; col <= 9 && i < SIZE && j < SIZE; col++, i++, j++)
-         {
-            left[i][j] = new BattleButton("" + row + col, i, j, true);
-            right[i][j] = new BattleButton(""+row+col, i, j, false);
+//      for (char row = 'A'; row <= 'I'; row++)
+//      {
+//         for (int col = 1, i = 0, j = 0; col <= 9 && i < SIZE && j < SIZE; col++, i++, j++)
+//         {
+//            left[i][j] = new BattleButton("" + row + col, i, j, true);
+//            right[i][j] = new BattleButton(""+row+col, i, j, false);
+//            left[i][j].setMargin(new Insets(0, 0, 0, 0));
+//            left[i][j].setPreferredSize(new Dimension(35, 35));
+//            right[i][j].setMargin(new Insets(0, 0, 0, 0));
+//            right[i][j].setPreferredSize(new Dimension(35, 35));
+//            left[i][j].addMouseListener(new BoardAdapter());
+//            right[i][j].addMouseListener(new BoardAdapter());
+//            left[i][j].setOpaque(true);
+//            right[i][j].setOpaque(true);
+//            yourSide.add(left[i][j]);
+//            oppSide.add(right[i][j]);
+//         }
+//      }
+      
+      for (int i = 0; i < SIZE; i++) {
+      	for (int j = 0; j < SIZE; j++) {
+      		left[i][j] = new BattleButton("" + i + " " + j, i, j, true);
+            right[i][j] = new BattleButton("" + i + " " + j, i, j, false);
             left[i][j].setMargin(new Insets(0, 0, 0, 0));
             left[i][j].setPreferredSize(new Dimension(35, 35));
             right[i][j].setMargin(new Insets(0, 0, 0, 0));
             right[i][j].setPreferredSize(new Dimension(35, 35));
             left[i][j].addMouseListener(new BoardAdapter());
             right[i][j].addMouseListener(new BoardAdapter());
+            left[i][j].setOpaque(true);
+            right[i][j].setOpaque(true);
             yourSide.add(left[i][j]);
             oppSide.add(right[i][j]);
-         }
+      	}
       }
       
       jtArea = new JTextArea(5,25);
@@ -230,8 +252,8 @@ public class BattleShipGui extends JPanel
 				   gameStarted = true;
 				   turn = true;
 				   
-				   synchronized(oos) {
-				   	wait();
+				   synchronized(lock) {
+				   	lock.wait();
 				   }
 				   
 				   oos.writeObject(oppBoard);
