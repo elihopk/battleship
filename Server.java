@@ -39,6 +39,9 @@ public class Server {
 	public Server() {
 		System.out.println("Starting server...");
 		
+		redBoard = null;
+		blueBoard = null;
+		
 		new Thread() {
 			public void run() {
 				new ChatServer();
@@ -139,7 +142,17 @@ public class Server {
 			// Blue player goes first
 			if (turns == -1 && threadColor.equals(PlayerColor.RED)) {
 				try {
-					wait();
+					synchronized(ois) {
+						wait();
+					}
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+			
+			while (blueBoard == null || redBoard == null) {
+				try {
+					sleep(5);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
@@ -172,7 +185,9 @@ public class Server {
 				turns++;
 				notifyAll();
 				try {
-					wait();
+					synchronized (ois) {
+						wait();
+					}
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}

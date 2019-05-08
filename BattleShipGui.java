@@ -39,12 +39,16 @@ public class BattleShipGui extends JPanel
    private Board oppBoard;
    private int fAdded;
    private boolean turn;
+   private int ships;
+   private ObjectOutputStream oos;
+   private ObjectInputStream ois;
    
    public BattleShipGui(String nickname, InetAddress IP)
    {
       setLayout(new FlowLayout(FlowLayout.CENTER));
       setBackground(new Color(0, 0, 255));
       
+      ships = 0;
       ourBoard = null;
       oppBoard = null;
       nick = nickname;
@@ -199,8 +203,6 @@ public class BattleShipGui extends JPanel
    
    protected class GameThread extends Thread {
 	   Socket gameSock;
-	   ObjectOutputStream oos;
-	   ObjectInputStream ois;
 	   
 	   public GameThread(Socket gameSock) {
 		   this.gameSock = gameSock;
@@ -228,7 +230,9 @@ public class BattleShipGui extends JPanel
 				   gameStarted = true;
 				   turn = true;
 				   
-				   wait();
+				   synchronized(oos) {
+				   	wait();
+				   }
 				   
 				   oos.writeObject(oppBoard);
 				   turn = false;
@@ -272,12 +276,22 @@ public class BattleShipGui extends JPanel
 		   int y = ((BattleButton) me.getSource()).getY2();
 		   
 		   if (((BattleButton) me.getSource()).getOwner()) {
-			   if (!gameStarted && ourBoard.getStatus(x, y) == 0) {
+			   if (!gameStarted && ourBoard.getStatus(x, y) == 0 && ships < 5) {
 				   ourBoard.addShipPiece(x, y);
 				   left[x][y].setBackground(Color.CYAN);
 				   System.out.println("Added friendly");
+				   ships++;
+				   if (ships == 5) {
+				   	try {
+							oos.writeObject(ourBoard);
+							oos.flush();
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+				   }
+			   } else {
+			   	System.out.println("Invalid mouse click 1");
 			   }
-			   System.out.println("Invalid mouse click");
 		   } else {
 			   if (turn && oppBoard.getStatus(x, y) != 2) {
 				   if (oppBoard.tryHit(x, y)) {
@@ -291,8 +305,11 @@ public class BattleShipGui extends JPanel
 					   notifyAll();
 				   }
 			   }
-			   System.out.println("Invalid mouse click");
+			   System.out.println("Invalid mouse click 2");
 		   }
+		   
+		   yourSide.repaint();
+		   yourSide.revalidate();
 	   }
    }
    
@@ -309,6 +326,7 @@ public class BattleShipGui extends JPanel
 		   
 		   this.x2 = x;
 		   this.y2 = y;
+		   this.owner = owner;
 	   }
 	   
 	   public int getX2() {

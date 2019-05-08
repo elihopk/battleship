@@ -1,10 +1,13 @@
+import java.io.Serializable;
+
 /**
  * Represents a battleship board and tracks board state.
  * 
  * @author Eli Hopkins
  * @version 1.0
  */
-public class Board {
+public class Board implements Serializable {
+	private static final long serialVersionUID = -6413024143864455590L;
 	// Create variables to track board state and owner
 	private int[][] board;
 	private PlayerColor pcolor;
