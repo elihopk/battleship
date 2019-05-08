@@ -214,49 +214,22 @@ public class Battleship extends JFrame {
             }
          });
       
+      // Actionlistener to handle textfield keyboard event      
+      jtfChat.addActionListener(
+         new ActionListener() {
+            public void actionPerformed(ActionEvent ae) {
+               
+               sendMessage();
+                
+            } 
+         });
+
       // Actionlistener to handle Send button click event      
       jbSend.addActionListener(
          new ActionListener() {
             public void actionPerformed(ActionEvent ae) {
                
-               msg = "[" + getUserName() + "]: " + jtfChat.getText();
-                              
-               try {
-                  
-                  // Instantiates outputstream in order to write to the server
-                  clientOutput = socket.getOutputStream();
-                  clientPrintWriter = new PrintWriter(new OutputStreamWriter(clientOutput));
-                  
-                  // If the client types bye the communication will end as well as the game
-                  // Maybe add another validation in order to confirm the entry [yes] or [no]
-                  // If ys then end if no then continue
-                  if (msg.contains("bye") || msg.contains("Bye")) {
-                     System.out.println("Client is leaving the chat...");
-                     try {
-                        
-                        Thread.sleep(1000);
-                        clientPrintWriter.println(msg);
-                        clientPrintWriter.flush();
-                        jtfChat.setText("");
-                        System.exit(0);
-                     
-                     } catch (Exception e) {
-                        
-                        System.out.println("Exception error: " + e.getMessage());   
-                     
-                     }
-                  } else {
-                     
-                     clientPrintWriter.println(msg);
-                     clientPrintWriter.flush();
-                     
-                     jtfChat.setText("");
-                  }
-               } catch (Exception e) {
-                  
-                  System.out.println("Exception error: " + e.getMessage());
-               
-               } 
+               sendMessage();
                   
             } 
          });
@@ -285,6 +258,52 @@ public class Battleship extends JFrame {
       
       }    
    } // End of Connect Method
+
+   /**
+   *  Method to handle chat send messages.
+   *  
+   */
+   public void sendMessage() {
+      
+      msg = "[" + getUserName() + "]: " + jtfChat.getText();
+                              
+      try {
+                  
+                  // Instantiates outputstream in order to write to the server
+         clientOutput = socket.getOutputStream();
+         clientPrintWriter = new PrintWriter(new OutputStreamWriter(clientOutput));
+                  
+                  // If the client types bye the communication will end as well as the game
+                  // Maybe add another validation in order to confirm the entry [yes] or [no]
+                  // If ys then end if no then continue
+         if (msg.contains("bye") || msg.contains("Bye")) {
+            System.out.println("Client is leaving the chat...");
+            try {
+                        
+               Thread.sleep(1000);
+               clientPrintWriter.println(msg);
+               clientPrintWriter.flush();
+               jtfChat.setText("");
+               System.exit(0);
+                     
+            } catch (Exception e) {
+                        
+               System.out.println("Exception error: " + e.getMessage());   
+                     
+            }
+         } else {
+                     
+            clientPrintWriter.println(msg);
+            clientPrintWriter.flush();
+                     
+            jtfChat.setText("");
+         }
+      } catch (Exception e) {
+                  
+         System.out.println("Exception error: " + e.getMessage());
+               
+      }
+   } // End of sendMessage
    
    /**
    *  Mutator method.
