@@ -309,7 +309,7 @@ public class Battleship extends JFrame {
    *  Mutator method.
    *  @param userName - the chat client username
    */
-   void setUserName(String userName) {
+   public void setUserName(String userName) {
       this.userName = userName;
    } 
    
@@ -317,7 +317,7 @@ public class Battleship extends JFrame {
    *  Accessor method.
    *  @return string
    */
-   String getUserName() {
+   public String getUserName() {
       return this.userName;
    }
 
