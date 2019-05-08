@@ -44,6 +44,7 @@ public class Server {
 		blueBoard = null;
 		lock = new Object();
 		
+		// Start the chat server
 		new Thread() {
 			public void run() {
 				new ChatServer();
@@ -113,6 +114,9 @@ public class Server {
 			}
 		}
 		
+		/**
+		 * Runs the server loop.
+		 */
 		public void run() {
 			// If not writing try adding flush
 			// Tell client what player color they are
@@ -152,6 +156,7 @@ public class Server {
 				}
 			}
 			
+			// Wait for both players to submit boards
 			while (blueBoard == null || redBoard == null) {
 				try {
 					sleep(5);
@@ -162,7 +167,7 @@ public class Server {
 			
 			// Adjust value for number of hits to win game
 			// This is the game loop
-			while (redBoard.getHits() < 17 && blueBoard.getHits() < 17) {
+			while (redBoard.getHits() < 5 && blueBoard.getHits() < 5) {
 				// Each turn send and receive a new board
 				if (thisBoard.getPlayerColor().equals(PlayerColor.RED)) {
 					try {
@@ -185,7 +190,11 @@ public class Server {
 				}
 				// Count the turn, notify the other thread, then wait for next turn
 				turns++;
-				notifyAll();
+				
+				synchronized (lock) {
+					lock.notifyAll();
+				}
+				
 				try {
 					synchronized (lock) {
 						lock.wait();
@@ -209,7 +218,10 @@ public class Server {
 		private Vector<PrintWriter> vpw = new Vector<PrintWriter>();
 		private ServerSocket sc;
 		private final int PORT = 16789;
-
+		
+		/**
+		 * Initialize the chat server and accept connections.
+		 */
 		public ChatServer() {
 			try {
 				sc = new ServerSocket(PORT);
@@ -234,15 +246,29 @@ public class Server {
 			}
 		}
 
+		/**
+		 * Handles messages for the chat server
+		 * 
+		 * @author Esteban Cruz
+		 * @version 1.0
+		 */
 		class ChatServerThread extends Thread {
 
 			// Attributes
 			private Socket accept;
 
+			/**
+			 * Initialize the socket.
+			 * 
+			 * @param _accept The socket to be used
+			 */
 			public ChatServerThread(Socket _accept) {
 				this.accept = _accept;
 			}
 
+			/**
+			 * Reads and resends chat messages.
+			 */
 			public void run() {
 				String msg;
 

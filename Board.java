@@ -13,7 +13,7 @@ public class Board implements Serializable {
 	private PlayerColor pcolor;
 	private int hits;
 	
-	/*
+	/**
 	 * Initializes the board.
 	 * 
 	 * @param pcolor The color of the player who owns this board
@@ -85,6 +85,13 @@ public class Board implements Serializable {
 		return pcolor;
 	}
 	
+	/**
+	 * Getter for status of space.
+	 * 
+	 * @param x X of the space
+	 * @param y Y of the space
+	 * @return Status of the space
+	 */
 	public int getStatus(int x, int y) {
 		return board[x][y];
 	}
