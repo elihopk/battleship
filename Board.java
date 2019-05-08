@@ -6,7 +6,7 @@
  */
 public class Board {
 	// Create variables to track board state and owner
-	private boolean[][] board;
+	private int[][] board;
 	private PlayerColor pcolor;
 	private int hits;
 	
@@ -17,14 +17,14 @@ public class Board {
 	 */
 	public Board(PlayerColor pcolor) {
 		// Initialize variables
-		board = new boolean[11][9];
+		board = new int[9][9];
 		this.pcolor = pcolor;
 		hits = 0;
 		
 		// Initialize the board as empty
 		for (int i = 0; i < board.length; i++) {
 			for (int j = 0; j < board[i].length; j++) {
-				board[i][j] = false;
+				board[i][j] = 0;
 			}
 		}
 	}
@@ -37,12 +37,18 @@ public class Board {
 	 * @return boolean Whether the location is filled
 	 */
 	public boolean checkHit(int x, int y) {
-		// Return if full and up hits
-		if (board[x][y]) {
+		return board[x][y] == 2;
+	}
+	
+	public boolean tryHit(int x, int y) {
+		if (board[x][y] == 1) {
 			hits++;
-			removeShipPiece(x, y);
+			board[x][y] = 2;
 			return true;
+		} else {
+			board[x][y] = 3;
 		}
+		
 		return false;
 	}
 	
@@ -54,7 +60,7 @@ public class Board {
 	 */
 	public void addShipPiece(int x, int y) {
 		// Set coordinate to true
-		board[x][y] = true;
+		board[x][y] = 1;
 	}
 	
 	/**
@@ -64,7 +70,7 @@ public class Board {
 	 * @param y Y value to remove
 	 */
 	public void removeShipPiece(int x, int y) {
-		board[x][y] = false;
+		board[x][y] = 0;
 	}
 	
 	/**
@@ -76,6 +82,10 @@ public class Board {
 		return pcolor;
 	}
 	
+	public int getStatus(int x, int y) {
+		return board[x][y];
+	}
+	
 	/**
 	 * Clears the board state.
 	 */
@@ -83,7 +93,7 @@ public class Board {
 		// Set each space on the board to false
 		for (int i = 0; i < board.length; i++) {
 			for (int j = 0; j < board[i].length; j++) {
-				board[i][j] = false;
+				board[i][j] = 0;
 			}
 		}
 	}

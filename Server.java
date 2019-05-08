@@ -97,10 +97,6 @@ public class Server {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			
-			if (threadColor.equals(PlayerColor.RED)) {
-			} else {
-			}
 		}
 		
 		public void run() {
@@ -108,6 +104,7 @@ public class Server {
 			// Tell client what player color they are
 			try {
 				oos.writeObject(threadColor);
+				oos.flush();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -146,6 +143,8 @@ public class Server {
 				if (thisBoard.getPlayerColor().equals(PlayerColor.RED)) {
 					try {
 						oos.writeObject(blueBoard);
+						oos.writeObject(redBoard);
+						oos.flush();
 						blueBoard = (Board) ois.readObject();
 					} catch (IOException | ClassNotFoundException e) {
 						e.printStackTrace();
@@ -153,6 +152,8 @@ public class Server {
 				} else {
 					try {
 						oos.writeObject(redBoard);
+						oos.writeObject(blueBoard);
+						oos.flush();
 						redBoard = (Board) ois.readObject();
 					} catch (IOException | ClassNotFoundException e) {
 						e.printStackTrace();
