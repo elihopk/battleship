@@ -31,6 +31,7 @@ public class BattleShipGui extends JPanel
    private JButton jbSend;
    private BattleButton[][] left, right;//left is yourSide and right is opponents
    private Socket chatSocket;
+   private Socket gameSocket;
    private PrintWriter chatPWrite;
    private boolean gameStarted;
    private PlayerColor ourColor;
@@ -51,10 +52,12 @@ public class BattleShipGui extends JPanel
       turn = false;
       fAdded = 0;
       chatSocket = null;
+      gameSocket = null;
       chatPWrite = null;
       
       try {
 		chatSocket = new Socket(IP, 16789);
+		gameSocket = new Socket(IP, 16790);
 		chatPWrite = new PrintWriter(chatSocket.getOutputStream());
       } catch (IOException e) {
 		e.printStackTrace();
@@ -139,8 +142,8 @@ public class BattleShipGui extends JPanel
       gameTest.add(outcomePan, BorderLayout.SOUTH);
       gameTest.add(chatPanel, BorderLayout.CENTER);
       add(gameTest);
-      
-      
+
+      new GameThread(gameSocket).start();
    }
    
    public void updateBoard(Board newBoard) {
@@ -181,7 +184,6 @@ public class BattleShipGui extends JPanel
    public static void main(String[] args)
    {
       JFrame frame = new JFrame();
-      ob = null;
       
       try {
 		ob = new BattleShipGui(args[0], InetAddress.getByName(args[1]));
@@ -218,9 +220,12 @@ public class BattleShipGui extends JPanel
 			   
 			   ourBoard = new Board(ourColor);
 			   
+			   oppBoard = new Board(PlayerColor.RED);
+			   
 			   while(ourBoard.getHits() < 17 && oppBoard.getHits() < 17) {
 				   oppBoard = (Board) ois.readObject();
 				   ob.updateBoard((Board) ois.readObject());
+				   gameStarted = true;
 				   turn = true;
 				   
 				   wait();
@@ -263,8 +268,8 @@ public class BattleShipGui extends JPanel
    
    protected class BoardAdapter extends MouseAdapter {
 	   public void mouseClicked(MouseEvent me) {
-		   int x = ((BattleButton) me.getSource()).getX();
-		   int y = ((BattleButton) me.getSource()).getY();
+		   int x = ((BattleButton) me.getSource()).getX2();
+		   int y = ((BattleButton) me.getSource()).getY2();
 		   
 		   if (((BattleButton) me.getSource()).getOwner()) {
 			   if (!gameStarted && ourBoard.getStatus(x, y) == 0) {
@@ -293,8 +298,8 @@ public class BattleShipGui extends JPanel
    
    protected class BattleButton extends JButton {
 	   private static final long serialVersionUID = 1826966623551372912L;
-	   private int x;
-	   private int y;
+	   private int x2;
+	   private int y2;
 	   
 	   // False for opp, True for this
 	   private boolean owner;
@@ -302,16 +307,16 @@ public class BattleShipGui extends JPanel
 	   public BattleButton(String text, int x, int y, boolean owner) {
 		   super(text);
 		   
-		   this.x = x;
-		   this.y = y;
+		   this.x2 = x;
+		   this.y2 = y;
 	   }
 	   
-	   public int getX() {
-		   return x;
+	   public int getX2() {
+		   return x2;
 	   }
 	   
-	   public int getY() {
-		   return y;
+	   public int getY2() {
+		   return y2;
 	   }
 	   
 	   public boolean getOwner() {

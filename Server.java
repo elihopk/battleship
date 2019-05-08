@@ -39,15 +39,24 @@ public class Server {
 	public Server() {
 		System.out.println("Starting server...");
 		
-		new ChatServer();
+		new Thread() {
+			public void run() {
+				new ChatServer();
+			}
+		}.start();
 		
 		conns = 0;
 		
 		try {
+			serv = new ServerSocket(16790);
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+		
+		try {
 			// Allow 2 clients to connect
 			while (conns < 2) {
-				serv = new ServerSocket(28888);
-			
+				System.out.println("Game Serv accepting connections.");
 				Socket conn = serv.accept();
 				
 				conns++;
