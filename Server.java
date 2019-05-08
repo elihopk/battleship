@@ -31,7 +31,6 @@ public class Server {
 	 */
 	public static void main(String[] args) {
 		Server serv = new Server();
-		serv.new ChatServer();
 	}
 	
 	/**
@@ -39,6 +38,8 @@ public class Server {
 	 */
 	public Server() {
 		System.out.println("Starting server...");
+		
+		new ChatServer();
 		
 		conns = 0;
 		
